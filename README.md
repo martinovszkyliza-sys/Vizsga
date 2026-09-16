@@ -19,31 +19,33 @@ Könyvtár/Könyvkölcsönzés (terv)
 ○	alapból nem látszanak, csak bejelentkezés után (ha felnőtt)
 
 
-●	szépirodalom/szakirodalom külön tábla??
+
 
 Adatbázis??(min 3 tábla)
 Könyvek
 ●	könyvid(p.key)
-●	író
-●	cím
-●	műfaj
-●	oldalszám
-●	kiadásiév
-●	nyelv
-●	kiadó
+●	író(string)
+●	cím(string)
+●	szépirodalom/szakirodalom(lehetne őket külön táblára??)
+●	műfaj(string)
+●	oldalszám(int)
+●	kiadásiév(int?date?)
+●	nyelv(string)
+●	kiadó(string)
+● 	(borítóképek)????(lehet képet mysqlbe rakni????)
 
 Olvasó
-●	név
-●	születésidátum
-●	elérhetőség
+●	név(string)
+●	születésidátum(date?)
+●	elérhetőség(string)
 ●	törzsszám(p.key)
 
 Kölcsönzések
 ●	kölcsönid(p.key)
 ●	könyvid(f.key)
 ●	törzsszám(f.key)
-●	kölcsöndátum
-●	kölcsönhatáridő
+●	kölcsöndátum(date)
+●	kölcsönhatáridő(date)
 
 
 
@@ -51,10 +53,11 @@ Kölcsönzések
 lehetséges ötlet könyvfelvétel??
 
 index oldalon látható
-●	sötét/világos mód beállítása
+●	sötét/világos mód beállítása(csuszka/radiobutton?)
 ●	belépés gomb (átrak másik oldalra)
 ○	név
 ○	törzsszám
+○	ha bármelyik textbox üres send alert message!!
 ○	=>belépés után megjelenik a főoldalon egy kikölcsönzött könyvek gomb
 ■	könyv adatai
 ■	kölcsöndátum
@@ -63,6 +66,7 @@ index oldalon látható
 ○	név
 ○	születési dátum
 ○	elérhetőség
+○	ha bármelyik textbox üres send alert message!!
 ○	(törzsszámot kap valahogy??)
 ●	író
 ●	cím
@@ -70,16 +74,16 @@ index oldalon látható
 ●	kiadásiév
 ●	nyelv
 ●	kiadó
-●	csak kölcsönözhető checkbox
-●	keresés gomb (átrak a találatok oldalra)
+●	csak kölcsönözhető checkbox (alapból az összes könyv kereshető, így csak azok amiket éppen ki lehet kölcsönözni)
+●	keresés gomb (átrak a találatok oldalra)-min 1 textbox kitöltése, ha minden textbox üres send alert message!!
+●	nap könyve?(random generált)=>főoldalon (jobb oldalt?) nap kiemelt könyve(borító,cím, író,(?link ami átrak a könyv adataihoz?))
 
 
 
 admin oldal
-●	felvétel
-●	törlés
-●	státuszmódosítás
-●	szerkesztés
+●	könyvek adatainak felvétele, törlése, szerkesztése
+●	olvasók adatainak felvétele, törlése, szerkesztése
+●	könyvek státuszmódosítása(kölcsönzött//kölcsönözhető)? (szerintem lehet automatikusan is?)
 
 
 
@@ -92,6 +96,8 @@ lejárt könyvekről emailt küld????
 mobilon is működjön!!!!
 
 tiszta kód elvei szerint !? 
-nap könyve?(random generált)
 
-++borítóképek!!!!
+
+
+
+

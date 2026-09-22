@@ -26,17 +26,17 @@ Könyvek
 ●	könyvid(p.key)
 ●	író(string)
 ●	cím(string)
-●	szépirodalom/szakirodalom(lehetne őket külön táblára??)
+●	szépirodalom/szakirodalom
 ●	műfaj(string)
 ●	oldalszám(int)
-●	kiadásiév(int?date?)
+●	kiadásiév(date)
 ●	nyelv(string)
 ●	kiadó(string)
-● 	(borítóképek)????(lehet képet mysqlbe rakni????)
+  lehetséges bővítés:borítóképek
 
 Olvasó
 ●	név(string)
-●	születésidátum(date?)
+●	születésidátum(date)
 ●	elérhetőség(string)
 ●	törzsszám(p.key)
 
@@ -50,7 +50,7 @@ Kölcsönzések
 
 
 
-lehetséges ötlet könyvfelvétel??
+könyvfelvétel
 
 index oldalon látható
 ●	sötét/világos mód beállítása(csuszka/radiobutton?)
@@ -67,7 +67,7 @@ index oldalon látható
 ○	születési dátum
 ○	elérhetőség
 ○	ha bármelyik textbox üres send alert message!!
-○	(törzsszámot kap valahogy??)
+○	törzsszámot kap 
 ●	író
 ●	cím
 ●	műfaj
@@ -76,26 +76,24 @@ index oldalon látható
 ●	kiadó
 ●	csak kölcsönözhető checkbox (alapból az összes könyv kereshető, így csak azok amiket éppen ki lehet kölcsönözni)
 ●	keresés gomb (átrak a találatok oldalra)-min 1 textbox kitöltése, ha minden textbox üres send alert message!!
-●	nap könyve?(random generált)=>főoldalon (jobb oldalt?) nap kiemelt könyve(borító,cím, író,(?link ami átrak a könyv adataihoz?))
+Lehetséges bővítmények: nap könyve(random generált)=>főoldalon  (link ami átrak a könyv adataihoz)
 
 
 
 admin oldal
 ●	könyvek adatainak felvétele, törlése, szerkesztése
 ●	olvasók adatainak felvétele, törlése, szerkesztése
-●	könyvek státuszmódosítása(kölcsönzött//kölcsönözhető)? (szerintem lehet automatikusan is?)
+●	könyvek státuszmódosítása(kölcsönzött//kölcsönözhető)
 
 
 
 
 
 
-regisztráció/bejelentkezés/keresésnél ha üresen hagy textboxot send alert!!
+regisztráció/bejelentkezés/keresésnél ha üresen hagy textboxot=>send alert!!
 
-lejárt könyvekről emailt küld????
-mobilon is működjön!!!!
+Lehetséges bővítés:lejárt könyvekről emailt küld
 
-tiszta kód elvei szerint !? 
 
 
 

@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="hu" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Könyvtár Irányítási Rendszer (Library Management)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+</head>
+<body class="h-full bg-slate-50 text-slate-800 font-sans antialiased flex flex-col">
+
+    <!-- Header / Navigation -->
+    <header class="bg-indigo-700 text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-indigo-600 p-2.5 rounded-xl border border-indigo-500 shadow-inner">
+                    <i class="fa-solid fa-book-bookmark text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight">KönyvtárAdmin</h1>
+                    <p class="text-xs text-indigo-200">Kölcsönzés és Adatbázis Kezelő Rendszer</p>
+                </div>
+            </div>
+            <!-- Quick Stats -->
+            <div class="flex items-center gap-4 text-sm bg-indigo-800/60 px-4 py-2 rounded-xl border border-indigo-600/50">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-users text-indigo-300"></i>
+                    <span>Olvasók: <strong id="stat-readers">5</strong></span>
+                </div>
+                <div class="h-4 w-px bg-indigo-600"></div>
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-book text-indigo-300"></i>
+                    <span>Könyvek: <strong id="stat-books">5</strong></span>
+                </div>
+                <div class="h-4 w-px bg-indigo-600"></div>
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-handshake text-indigo-300"></i>
+                    <span>Aktív Kölcsönzés: <strong id="stat-loans">2</strong></span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Application Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-6">
+
+        <!-- Navigation Tabs & Action Bar -->
+        <div class="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+            <!-- Tabs -->
+            <div class="flex rounded-xl bg-slate-100 p-1.5 gap-1" role="tablist">
+                <button onclick="switchTab('books')" id="tab-books" role="tab" aria-selected="true"
+                    class="flex-1 md:flex-initial px-5 py-2.5 text-sm font-semibold rounded-lg transition-all bg-white text-indigo-600 shadow-sm">
+                    <i class="fa-solid fa-book mr-2"></i> Könyvek
+                </button>
+                <button onclick="switchTab('readers')" id="tab-readers" role="tab" aria-selected="false"
+                    class="flex-1 md:flex-initial px-5 py-2.5 text-sm font-semibold rounded-lg transition-all text-slate-600 hover:text-indigo-600">
+                    <i class="fa-solid fa-users mr-2"></i> Olvasók
+                </button>
+                <button onclick="switchTab('loans')" id="tab-loans" role="tab" aria-selected="false"
+                    class="flex-1 md:flex-initial px-5 py-2.5 text-sm font-semibold rounded-lg transition-all text-slate-600 hover:text-indigo-600">
+                    <i class="fa-solid fa-handshake mr-2"></i> Kölcsönzések
+                </button>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center gap-3">
+                <button onclick="openAddModal()" class="flex-1 md:flex-initial inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-all shadow-sm shadow-indigo-200">
+                    <i class="fa-solid fa-plus"></i> <span id="add-button-text">Új könyv hozzáadása</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Search and Filter Bar -->
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col sm:flex-row gap-3">
+            <div class="relative flex-1">
+                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </span>
+                <input type="text" id="search-input" oninput="handleSearch()" placeholder="Keresés a táblázatban (cím, szerző, név...)"
+                    class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all">
+            </div>
+            <div class="sm:w-64" id="filter-container">
+                <select id="category-filter" onchange="handleSearch()"
+                    class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all">
+                    <option value="">Összes kategória / státusz</option>
+                    <option value="szépirodalom">Szépirodalom</option>
+                    <option value="szakirodalom">Szakirodalom</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Content Panels -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex-1 overflow-hidden flex flex-col">
+            
+            <!-- BOOKS PANEL -->
+            <div id="panel-books" class="tab-panel flex-1 flex flex-col overflow-hidden">
+                <div class="overflow-x-auto flex-1">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50/80 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                <th class="py-3.5 px-4">Azonosító</th>
+                                <th class="py-3.5 px-4">Cím / Szerző</th>
+                                <th class="py-3.5 px-4">Kategória / Műfaj</th>
+                                <th class="py-3.5 px-4">Korhatár</th>
+                                <th class="py-3.5 px-4">Kiadás</th>
+                                <th class="py-3.5 px-4">Státusz</th>
+                                <th class="py-3.5 px-4 text-right">Műveletek</th>
+                            </tr>
+                        </thead>
+                        <tbody id="books-table-body" class="divide-y divide-slate-100 text-sm">
+                            <!-- Populated via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- READERS PANEL -->
+            <div id="panel-readers" class="tab-panel hidden flex-1 flex flex-col overflow-hidden">
+                <div class="overflow-x-auto flex-1">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50/80 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                <th class="py-3.5 px-4">Törzsszám</th>
+                                <th class="py-3.5 px-4">Név</th>
+                                <th class="py-3.5 px-4">Születési Dátum</th>
+                                <th class="py-3.5 px-4">Elérhetőség</th>
+                                <th class="py-3.5 px-4">Jogosultság</th>
+                                <th class="py-3.5 px-4 text-right">Műveletek</th>
+                            </tr>
+                        </thead>
+                        <tbody id="readers-table-body" class="divide-y divide-slate-100 text-sm">
+                            <!-- Populated via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- LOANS PANEL -->
+            <div id="panel-loans" class="tab-panel hidden flex-1 flex flex-col overflow-hidden">
+                <div class="overflow-x-auto flex-1">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50/80 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                <th class="py-3.5 px-4">Kölcsön ID</th>
+                                <th class="py-3.5 px-4">Olvasó</th>
+                                <th class="py-3.5 px-4">Könyv Címe</th>
+                                <th class="py-3.5 px-4">Kölcsönzés Dátuma</th>
+                                <th class="py-3.5 px-4">Határidő</th>
+                                <th class="py-3.5 px-4 text-right">Műveletek</th>
+                            </tr>
+                        </thead>
+                        <tbody id="loans-table-body" class="divide-y divide-slate-100 text-sm">
+                            <!-- Populated via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Modal for Adding Records -->
+    <div id="add-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-xl max-w-lg w-full overflow-hidden border border-slate-200 animate-in fade-in zoom-in duration-200">
+            <div class="flex justify-between items-center px-6 py-4 border-b border-slate-100">
+                <h3 id="modal-title" class="font-bold text-slate-800 text-lg">Új Könyv Hozzáadása</h3>
+                <button onclick="closeAddModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <form id="dynamic-form" onsubmit="handleFormSubmit(event)" class="p-6 flex flex-col gap-4 max-h-[80vh] overflow-y-auto">
+                <!-- Form fields injected dynamically based on active tab -->
+            </form>
+        </div>
+    </div>
+
+    <!-- Custom Notification Box / Toast -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div id="toast-content" class="bg-slate-900 text-white px-5 py-3 rounded-xl shadow-lg flex items-center gap-3 text-sm">
+            <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
+            <span id="toast-message">Művelet sikeresen végrehajtva!</span>
+        </div>
+    </div>
+
+    <!-- Application Logic Script -->
+    <script>
+        // Database simulation data based on user schema & sample items
+        let db = {
+            olvasok: [
+                { torzsszam: 1, nev: 'Kovács Anna', szuletesi_datum: '1995-05-12', elerhetoseg: 'anna.kovacs@email.com', is_admin: 0 },
+                { torzsszam: 2, nev: 'Nagy Péter', szuletesi_datum: '2010-08-20', elerhetoseg: 'peter.nagy@email.com', is_admin: 0 },
+                { torzsszam: 3, nev: 'Szabó Eszter', szuletesi_datum: '1988-03-15', elerhetoseg: 'eszter.szabo@email.com', is_admin: 0 },
+                { torzsszam: 4, nev: 'Tóth Bence', szuletesi_datum: '2012-11-05', elerhetoseg: 'bence.toth@email.com', is_admin: 0 },
+                { torzsszam: 5, nev: 'Adminisztrátor', szuletesi_datum: '1980-01-01', elerhetoseg: 'admin@konyvtar.hu', is_admin: 1 }
+            ],
+            konyvek: [
+                { konyvid: 1, cim: 'A Pál utcai fiúk', iro: 'Molnár Ferenc', mufaj: 'Ifjúsági regény', kategoria: 'szépirodalom', korhatar: 0, oldalszam: 250, kiadasi_ev: 1907, nyelv: 'Magyar', kiado: 'Móra Könyvkiadó', statusz: 'kölcsönözhető', borito_kep: 'pal_utcai_fiuk.jpg' },
+                { konyvid: 2, cim: 'Egri csillagok', iro: 'Gárdonyi Géza', mufaj: 'Történelmi regény', kategoria: 'szépirodalom', korhatar: 0, oldalszam: 500, kiadasi_ev: 1901, nyelv: 'Magyar', kiado: 'Osiris Kiadó', statusz: 'kölcsönzött', borito_kep: 'egri_csillagok.jpg' },
+                { konyvid: 3, cim: 'A sötét ötven árnyalata', iro: 'E. L. James', mufaj: 'Romantikus / Erotikus', kategoria: 'szépirodalom', korhatar: 18, oldalszam: 530, kiadasi_ev: 2011, nyelv: 'Magyar', kiado: 'Ulpius-ház', statusz: 'kölcsönözhető', borito_kep: 'sotet_otven.jpg' },
+                { konyvid: 4, cim: 'Python programozás alapjai', iro: 'Kovács János', mufaj: 'Informatika', kategoria: 'szakirodalom', korhatar: 0, oldalszam: 320, kiadasi_ev: 2020, nyelv: 'Magyar', kiado: 'Kiskapu Kiadó', statusz: 'kölcsönzött', borito_kep: 'python_alapok.jpg' },
+                { konyvid: 5, cim: 'AZ (It)', iro: 'Stephen King', mufaj: 'Horror', kategoria: 'szépirodalom', korhatar: 18, oldalszam: 1138, kiadasi_ev: 1986, nyelv: 'Magyar', kiado: 'Európa Könyvkiadó', statusz: 'kölcsönözhető', borito_kep: 'stephen_king_az.jpg' }
+            ],
+            kolcsonzesek: [
+                { kolcsonid: 1, torzsszam: 1, konyvid: 4, kolcson_datum: '2026-05-01', kolcson_hatarido: '2026-06-01' },
+                { kolcsonid: 2, torzsszam: 3, konyvid: 2, kolcson_datum: '2026-05-10', kolcson_hatarido: '2026-06-10' }
+            ]
+        };
+
+        let currentActiveTab = 'books';
+
+        // Initialize App on Load
+        window.onload = function() {
+            renderAll();
+        };
+
+        function updateStats() {
+            document.getElementById('stat-readers').innerText = db.olvasok.length;
+            document.getElementById('stat-books').innerText = db.konyvek.length;
+            document.getElementById('stat-loans').innerText = db.kolcsonzesek.length;
+        }
+
+        // Tab Switching Logic
+        function switchTab(tabName) {
+            currentActiveTab = tabName;
+            const panels = document.querySelectorAll('.tab-panel');
+            panels.forEach(p => p.classList.add('hidden'));
+
+            ['books', 'readers', 'loans'].forEach(t => {
+                const btn = document.getElementById(`tab-${t}`);
+                if (t === tabName) {
+                    btn.className = "flex-1 md:flex-initial px-5 py-2.5 text-sm font-semibold rounded-lg transition-all bg-white text-indigo-600 shadow-sm";
+                    btn.setAttribute('aria-selected', 'true');
+                } else {
+                    btn.className = "flex-1 md:flex-initial px-5 py-2.5 text-sm font-semibold rounded-lg transition-all text-slate-600 hover:text-indigo-600";
+                    btn.setAttribute('aria-selected', 'false');
+                }
+            });
+
+            document.getElementById(`panel-${tabName}`).classList.remove('hidden');
+
+            // Update Add Button text and Filter dropdown options
+            const addBtnText = document.getElementById('add-button-text');
+            const filterSelect = document.getElementById('category-filter');
+            
+            if (tabName === 'books') {
+                addBtnText.innerText = 'Új könyv hozzáadása';
+                filterSelect.innerHTML = `
+                    <option value="">Összes kategória</option>
+                    <option value="szépirodalom">Szépirodalom</option>
+                    <option value="szakirodalom">Szakirodalom</option>
+                `;
+            } else if (tabName === 'readers') {
+                addBtnText.innerText = 'Új olvasó regisztrálása';
+                filterSelect.innerHTML = `
+                    <option value="">Összes státusz</option>
+                    <option value="admin">Adminisztrátor</option>
+                    <option value="olvaso">Sima olvasó</option>
+                `;
+            } else if (tabName === 'loans') {
+                addBtnText.innerText = 'Új kölcsönzés rögzítése';
+                filterSelect.innerHTML = `
+                    <option value="">Összes aktív kölcsönzés</option>
+                `;
+            }
+
+            document.getElementById('search-input').value = '';
+            renderAll();
+        }
+
+        // Render Tables
+        function renderAll() {
+            updateStats();
+            renderBooks();
+            renderReaders();
+            renderLoans();
+        }
+
+        function renderBooks(filteredList = null) {
+            const tbody = document.getElementById('books-table-body');
+            const data = filteredList || db.konyvek;
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400">Nincs találat a megadott feltételekre.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = data.map(b => `
+                <tr class="hover:bg-slate-50/60 transition-colors">
+                    <td class="py-3 px-4 font-mono text-xs text-slate-500">#${b.konyvid}</td>
+                    <td class="py-3 px-4">
+                        <div class="font-semibold text-slate-800">${escapeHtml(b.cim)}</div>
+                        <div class="text-xs text-slate-500">${escapeHtml(b.iro)}</div>
+                    </td>
+                    <td class="py-3 px-4">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${b.kategoria === 'szépirodalom' ? 'bg-purple-50 text-purple-700' : 'bg-blue-50 text-blue-700'}">
+                            ${escapeHtml(b.kategoria)}
+                        </span>
+                        <div class="text-xs text-slate-400 mt-0.5">${escapeHtml(b.mufaj || '-')}</div>
+                    </td>
+                    <td class="py-3 px-4">
+                        ${b.korhatar > 0 ? `<span class="bg-rose-50 text-rose-700 px-2 py-0.5 rounded text-xs font-medium">${b.korhatar}+</span>` : '<span class="text-xs text-emerald-600 font-medium">Mindenkié</span>'}
+                    </td>
+                    <td class="py-3 px-4 text-xs text-slate-600">
+                        <div>${b.kiadasi_ev}</div>
+                        <div class="text-slate-400">${escapeHtml(b.kiado || '')}</div>
+                    </td>
+                    <td class="py-3 px-4">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${b.statusz === 'kölcsönözhető' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}">
+                            <span class="w-1.5 h-1.5 rounded-full ${b.statusz === 'kölcsönözhető' ? 'bg-emerald-500' : 'bg-amber-500'}"></span>
+                            ${b.statusz}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4 text-right">
+                        <button onclick="deleteRecord('konyvek', ${b.konyvid})" class="text-slate-400 hover:text-rose-600 p-1 transition-colors" title="Törlés">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderReaders(filteredList = null) {
+            const tbody = document.getElementById('readers-table-body');
+            const data = filteredList || db.olvasok;
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-400">Nincs találat a megadott feltételekre.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = data.map(r => `
+                <tr class="hover:bg-slate-50/60 transition-colors">
+                    <td class="py-3 px-4 font-mono text-xs text-slate-500">#${r.torzsszam}</td>
+                    <td class="py-3 px-4 font-semibold text-slate-800">${escapeHtml(r.nev)}</td>
+                    <td class="py-3 px-4 text-slate-600 text-xs">${r.szuletesi_datum}</td>
+                    <td class="py-3 px-4 text-slate-600 text-xs">${escapeHtml(r.elerhetoseg)}</td>
+                    <td class="py-3 px-4">
+                        ${r.is_admin ? '<span class="bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-full text-xs font-semibold">Admin</span>' : '<span class="bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-full text-xs font-medium">Olvasó</span>'}
+                    </td>
+                    <td class="py-3 px-4 text-right">
+                        <button onclick="deleteRecord('olvasok', ${r.torzsszam})" class="text-slate-400 hover:text-rose-600 p-1 transition-colors" title="Törlés">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderLoans(filteredList = null) {
+            const tbody = document.getElementById('loans-table-body');
+            const data = filteredList || db.kolcsonzesek;
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-400">Nincs aktív kölcsönzés.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = data.map(l => {
+                const reader = db.olvasok.find(r => r.torzsszam === l.torzsszam) || { nev: 'Ismeretlen olvasó' };
+                const book = db.konyvek.find(b => b.konyvid === l.konyvid) || { cim: 'Ismeretlen könyv' };
+                return `
+                    <tr class="hover:bg-slate-50/60 transition-colors">
+                        <td class="py-3 px-4 font-mono text-xs text-slate-500">#${l.kolcsonid}</td>
+                        <td class="py-3 px-4 font-medium text-slate-800">${escapeHtml(reader.nev)}</td>
+                        <td class="py-3 px-4 font-semibold text-indigo-600">${escapeHtml(book.cim)}</td>
+                        <td class="py-3 px-4 text-xs text-slate-600">${l.kolcson_datum}</td>
+                        <td class="py-3 px-4 text-xs text-rose-600 font-medium">${l.kolcson_hatarido}</td>
+                        <td class="py-3 px-4 text-right">
+                            <button onclick="returnBook(${l.kolcsonid}, ${l.konyvid})" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors inline-flex items-center gap-1.5" title="Könyv visszahozatala">
+                                <i class="fa-solid fa-arrow-rotate-left"></i> Visszahozás
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Search & Filtering
+        function handleSearch() {
+            const query = document.getElementById('search-input').value.toLowerCase();
+            const filter = document.getElementById('category-filter').value;
+
+            if (currentActiveTab === 'books') {
+                const filtered = db.konyvek.filter(b => {
+                    const matchQuery = b.cim.toLowerCase().includes(query) || b.iro.toLowerCase().includes(query) || (b.mufaj && b.mufaj.toLowerCase().includes(query));
+                    const matchFilter = filter === '' || b.kategoria === filter;
+                    return matchQuery && matchFilter;
+                });
+                renderBooks(filtered);
+            } else if (currentActiveTab === 'readers') {
+                const filtered = db.olvasok.filter(r => {
+                    const matchQuery = r.nev.toLowerCase().includes(query) || r.elerhetoseg.toLowerCase().includes(query);
+                    const matchFilter = filter === '' || (filter === 'admin' ? r.is_admin === 1 : r.is_admin === 0);
+                    return matchQuery && matchFilter;
+                });
+                renderReaders(filtered);
+            } else if (currentActiveTab === 'loans') {
+                const filtered = db.kolcsonzesek.filter(l => {
+                    const reader = db.olvasok.find(r => r.torzsszam === l.torzsszam)?.nev.toLowerCase() || '';
+                    const book = db.konyvek.find(b => b.konyvid === l.konyvid)?.cim.toLowerCase() || '';
+                    return reader.includes(query) || book.includes(query);
+                });
+                renderLoans(filtered);
+            }
+        }
+
+        // Modal Form Handling
+        function openAddModal() {
+            const modal = document.getElementById('add-modal');
+            const title = document.getElementById('modal-title');
+            const formContainer = document.getElementById('dynamic-form');
+            modal.classList.remove('hidden');
+
+            if (currentActiveTab === 'books') {
+                title.innerText = 'Új Könyv Hozzáadása';
+                formContainer.innerHTML = `
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Könyv Címe *</label>
+                        <input type="text" name="cim" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Író / Szerző *</label>
+                        <input type="text" name="iro" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Műfaj</label>
+                            <input type="text" name="mufaj" placeholder="pl. Sci-Fi" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Kategória *</label>
+                            <select name="kategoria" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <option value="szépirodalom">Szépirodalom</option>
+                                <option value="szakirodalom">Szakirodalom</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Korhatár</label>
+                            <input type="number" name="korhatar" value="0" min="0" max="18" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Oldalszám</label>
+                            <input type="number" name="oldalszam" value="200" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Kiadási Év</label>
+                            <input type="number" name="kiadasi_ev" value="2024" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Kiadó</label>
+                        <input type="text" name="kiado" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div class="flex justify-end gap-2 mt-4 pt-3 border-t border-slate-100">
+                        <button type="button" onclick="closeAddModal()" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">Mégse</button>
+                        <button type="submit" class="px-5 py-2 text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-colors shadow-sm">Mentés</button>
+                    </div>
+                `;
+            } else if (currentActiveTab === 'readers') {
+                title.innerText = 'Új Olvasó Regisztrálása';
+                formContainer.innerHTML = `
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Teljes Név *</label>
+                        <input type="text" name="nev" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Születési Dátum *</label>
+                        <input type="date" name="szuletesi_datum" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Elérhetőség (Email) *</label>
+                        <input type="email" name="elerhetoseg" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Jogosultság</label>
+                        <select name="is_admin" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="0">Sima olvasó</option>
+                            <option value="1">Adminisztrátor</option>
+                        </select>
+                    </div>
+                    <div class="flex justify-end gap-2 mt-4 pt-3 border-t border-slate-100">
+                        <button type="button" onclick="closeAddModal()" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">Mégse</button>
+                        <button type="submit" class="px-5 py-2 text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-colors shadow-sm">Regisztráció</button>
+                    </div>
+                `;
+            } else if (currentActiveTab === 'loans') {
+                title.innerText = 'Új Kölcsönzés Rögzítése';
+                const availableBooks = db.konyvek.filter(b => b.statusz === 'kölcsönözhető');
+                
+                formContainer.innerHTML = `
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Olvasó kiválasztása *</label>
+                        <select name="torzsszam" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            ${db.olvasok.map(r => `<option value="${r.torzsszam}">#${r.torzsszam} - ${escapeHtml(r.nev)}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Könyv kiválasztása (csak kölcsönözhető) *</label>
+                        <select name="konyvid" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            ${availableBooks.map(b => `<option value="${b.konyvid}">#${b.konyvid} - ${escapeHtml(b.cim)} (${escapeHtml(b.iro)})</option>`).join('')}
+                        </select>
+                        ${availableBooks.length === 0 ? '<p class="text-xs text-rose-500 mt-1">Jelenleg nincs kölcsönözhető könyv!</p>' : ''}
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Kölcsönzés Dátuma *</label>
+                            <input type="date" name="kolcson_datum" value="${new Date().toISOString().split('T')[0]}" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Visszahozatali Határidő *</label>
+                            <input type="date" name="kolcson_hatarido" value="${new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0]}" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                    </div>
+                    <div class="flex justify-end gap-2 mt-4 pt-3 border-t border-slate-100">
+                        <button type="button" onclick="closeAddModal()" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">Mégse</button>
+                        <button type="submit" ${availableBooks.length === 0 ? 'disabled' : ''} class="px-5 py-2 text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white rounded-xl transition-colors shadow-sm">Kölcsönzés</button>
+                    </div>
+                `;
+            }
+        }
+
+        function closeAddModal() {
+            document.getElementById('add-modal').classList.add('hidden');
+        }
+
+        function handleFormSubmit(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+
+            if (currentActiveTab === 'books') {
+                const newBook = {
+                    konyvid: db.konyvek.length ? Math.max(...db.konyvek.map(b => b.konyvid)) + 1 : 1,
+                    cim: formData.get('cim'),
+                    iro: formData.get('iro'),
+                    mufaj: formData.get('mufaj') || 'Általános',
+                    kategoria: formData.get('kategoria'),
+                    korhatar: parseInt(formData.get('korhatar')) || 0,
+                    oldalszam: parseInt(formData.get('oldalszam')) || 100,
+                    kiadasi_ev: parseInt(formData.get('kiadasi_ev')) || 2024,
+                    nyelv: 'Magyar',
+                    kiado: formData.get('kiado') || 'Ismeretlen',
+                    statusz: 'kölcsönözhető',
+                    borito_kep: 'default.jpg'
+                };
+                db.konyvek.push(newBook);
+                showToast('Könyv sikeresen hozzáadva az adatbázishoz!');
+            } else if (currentActiveTab === 'readers') {
+                const newReader = {
+                    torzsszam: db.olvasok.length ? Math.max(...db.olvasok.map(r => r.torzsszam)) + 1 : 1,
+                    nev: formData.get('nev'),
+                    szuletesi_datum: formData.get('szuletesi_datum'),
+                    elerhetoseg: formData.get('elerhetoseg'),
+                    is_admin: parseInt(formData.get('is_admin'))
+                };
+                db.olvasok.push(newReader);
+                showToast('Új olvasó sikeresen regisztrálva!');
+            } else if (currentActiveTab === 'loans') {
+                const konyvid = parseInt(formData.get('konyvid'));
+                const torzsszam = parseInt(formData.get('torzsszam'));
+
+                const newLoan = {
+                    kolcsonid: db.kolcsonzesek.length ? Math.max(...db.kolcsonzesek.map(l => l.kolcsonid)) + 1 : 1,
+                    torzsszam: torzsszam,
+                    konyvid: konyvid,
+                    kolcson_datum: formData.get('kolcson_datum'),
+                    kolcson_hatarido: formData.get('kolcson_hatarido')
+                };
+
+                // Update book status to borrowed
+                const book = db.konyvek.find(b => b.konyvid === konyvid);
+                if (book) book.statusz = 'kölcsönzött';
+
+                db.kolcsonzesek.push(newLoan);
+                showToast('Kölcsönzés sikeresen rögzítve!');
+            }
+
+            closeAddModal();
+            renderAll();
+        }
+
+        function deleteRecord(table, id) {
+            if (!confirm('Biztosan törölni szeretné ezt a rekordot?')) return;
+
+            if (table === 'konyvek') {
+                db.konyvek = db.konyvek.filter(b => b.konyvid !== id);
+                db.kolcsonzesek = db.kolcsonzesek.filter(l => l.konyvid !== id);
+                showToast('Könyv sikeresen törölve.');
+            } else if (table === 'olvasok') {
+                db.olvasok = db.olvasok.filter(r => r.torzsszam !== id);
+                db.kolcsonzesek = db.kolcsonzesek.filter(l => l.torzsszam !== id);
+                showToast('Olvasó és kapcsolódó adatai törölve.');
+            }
+            renderAll();
+        }
+
+        function returnBook(loanId, bookId) {
+            db.kolcsonzesek = db.kolcsonzesek.filter(l => l.kolcsonid !== loanId);
+            const book = db.konyvek.find(b => b.konyvid === bookId);
+            if (book) book.statusz = 'kölcsönözhető';
+            showToast('Könyv sikeresen visszahozva!');
+            renderAll();
+        }
+
+        // Notification Toast
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const msgEl = document.getElementById('toast-message');
+            msgEl.innerText = message;
+            
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        // Utility helper to prevent XSS
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>

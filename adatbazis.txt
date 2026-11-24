@@ -11,7 +11,9 @@ CREATE TABLE IF NOT EXISTS olvasok (
     nev VARCHAR(150) NOT NULL,
     szuletesi_datum DATE NOT NULL,
     elerhetoseg VARCHAR(255) NOT NULL,
-    is_admin TINYINT(1) DEFAULT 0 -- Opcionális: 1, ha adminisztrátor, 0 ha sima olvasó
+    password_hash VARCHAR(255) NULL,
+    is_admin TINYINT(1) DEFAULT 0, -- Opcionális: 1, ha adminisztrátor, 0 ha sima olvasó
+    UNIQUE KEY uq_olvasok_elerhetoseg (elerhetoseg)
 ) ENGINE=InnoDB;
 
 -- 2. Könyvek táblája
@@ -51,12 +53,20 @@ CREATE TABLE IF NOT EXISTS kolcsonzesek (
 USE konyvtar_db;
 
 -- 1. Olvasók feltöltése (Keverve felnőttek és kiskorúak a korhatár teszteléséhez)
-INSERT INTO olvasok (nev, szuletesi_datum, elerhetoseg, is_admin) VALUES
-('Kovács Anna', '1995-05-12', 'anna.kovacs@email.com', 0),
-('Nagy Péter', '2010-08-20', 'peter.nagy@email.com', 0),       -- 16 éves (2026-ban) -> Kiskorú
-('Szabó Eszter', '1988-03-15', 'eszter.szabo@email.com', 0),
-('Tóth Bence', '2012-11-05', 'bence.toth@email.com', 0),        -- 14 éves (2026-ban) -> Kiskorú
-('Adminisztrátor', '1980-01-01', 'admin@konyvtar.hu', 1);       -- Admin fiók
+INSERT INTO olvasok (nev, szuletesi_datum, elerhetoseg, password_hash, is_admin) VALUES
+('Kovács Anna', '1995-05-12', 'anna.kovacs@email.com', 'scrypt$8256a28432e9ac52460151a41d3c7472$8190293b1abbfe09daee302bb973ae387e5cfd25ed4770b5c0c2f46d50d18ac1b2776eb1dbe409e5bcebbf08fb46e8d0c162b34ac2bb2d0b0b5785e1403372e3', 0),
+('Nagy Péter', '2010-08-20', 'peter.nagy@email.com', 'scrypt$6789cebc4ce54eef38519efd0d2af146$493a546a3353958d6830ca26b73b18ce02d7ec1eec83be99708bc591caf7e51818ec00dd7f84e78bd2273d4735319734b4d6656a38d55ceff98e9089dee776fa', 0),       -- 16 éves (2026-ban) -> Kiskorú
+('Szabó Eszter', '1988-03-15', 'eszter.szabo@email.com', 'scrypt$1fed562ce33ac1424858c2b06bbe288d$845422ed1b772be8e88dc2ceca8bc8f85e392fdc837b8fb303ecde3aa9c083105ec326b2928c1755e1b77e7395486845bdd2da5f0757d64d09fe24511814ec54', 0),
+('Tóth Bence', '2012-11-05', 'bence.toth@email.com', 'scrypt$3ed639a53b5760b0c901fd22eb6d854d$87db2596918dd09ed27830852e62412c3ac44b50f15b1dbc84e04fc63837f1c509ca3adc91801f79960199033ed5f1cfe2415e80446ee2ad657c3752cd6dae33', 0),        -- 14 éves (2026-ban) -> Kiskorú
+('Adminisztrátor', '1980-01-01', 'admin@konyvtar.hu', 'scrypt$8699a5f155220df27d4f24f4c70c6d09$1b07288ada91c8f30b974e6af297fa61341dd1f035cf6fa5767ede5ab1ec0fd8ff575a89525b0d84deebef7e2200b7f04e8a6a2c258c98278c9263868a2ddba0', 1);       -- Admin fiók
+
+-- Minden mintaolvasó kezdeti jelszava: KonyvtarDemo2026! (csak teszteléshez).
+-- Csak a hiányzó hash-eket töltjük ki, a meglévő jelszavak megmaradnak.
+UPDATE olvasok SET password_hash = 'scrypt$8256a28432e9ac52460151a41d3c7472$8190293b1abbfe09daee302bb973ae387e5cfd25ed4770b5c0c2f46d50d18ac1b2776eb1dbe409e5bcebbf08fb46e8d0c162b34ac2bb2d0b0b5785e1403372e3' WHERE elerhetoseg = 'anna.kovacs@email.com' AND password_hash IS NULL;
+UPDATE olvasok SET password_hash = 'scrypt$6789cebc4ce54eef38519efd0d2af146$493a546a3353958d6830ca26b73b18ce02d7ec1eec83be99708bc591caf7e51818ec00dd7f84e78bd2273d4735319734b4d6656a38d55ceff98e9089dee776fa' WHERE elerhetoseg = 'peter.nagy@email.com' AND password_hash IS NULL;
+UPDATE olvasok SET password_hash = 'scrypt$1fed562ce33ac1424858c2b06bbe288d$845422ed1b772be8e88dc2ceca8bc8f85e392fdc837b8fb303ecde3aa9c083105ec326b2928c1755e1b77e7395486845bdd2da5f0757d64d09fe24511814ec54' WHERE elerhetoseg = 'eszter.szabo@email.com' AND password_hash IS NULL;
+UPDATE olvasok SET password_hash = 'scrypt$3ed639a53b5760b0c901fd22eb6d854d$87db2596918dd09ed27830852e62412c3ac44b50f15b1dbc84e04fc63837f1c509ca3adc91801f79960199033ed5f1cfe2415e80446ee2ad657c3752cd6dae33' WHERE elerhetoseg = 'bence.toth@email.com' AND password_hash IS NULL;
+UPDATE olvasok SET password_hash = 'scrypt$8699a5f155220df27d4f24f4c70c6d09$1b07288ada91c8f30b974e6af297fa61341dd1f035cf6fa5767ede5ab1ec0fd8ff575a89525b0d84deebef7e2200b7f04e8a6a2c258c98278c9263868a2ddba0' WHERE elerhetoseg = 'admin@konyvtar.hu' AND password_hash IS NULL;
 
 -- 2. Könyvek feltöltése (Gyerek-, felnőtt, szépirodalmi és szakirodalmi könyvek)
 INSERT INTO konyvek (cim, iro, mufaj, kategoria, korhatar, oldalszam, kiadasi_ev, nyelv, kiado, statusz, borito_kep) VALUES
